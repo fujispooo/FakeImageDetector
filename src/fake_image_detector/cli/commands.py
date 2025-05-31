@@ -93,9 +93,7 @@ def train(
         batch_size=config.training.batch_size,
     )
 
-    click.echo(
-        f"Training completed! Test accuracy: {results['test_accuracy']:.4f}"
-    )
+    click.echo(f"Training completed! Test accuracy: {results['test_accuracy']:.4f}")
 
 
 @main.command()
@@ -134,9 +132,7 @@ def predict(config: Config, model_path: str, image_path: str) -> None:
     click.echo(f"Image: {image_path}")
     click.echo(f"Prediction: {'FAKE' if is_fake else 'REAL'}")
     click.echo(f"Confidence: {confidence:.4f}")
-    click.echo(
-        f"Probabilities - Real: {real_prob:.4f}, Fake: {fake_prob:.4f}"
-    )
+    click.echo(f"Probabilities - Real: {real_prob:.4f}, Fake: {fake_prob:.4f}")
 
 
 @main.command()
@@ -144,9 +140,7 @@ def predict(config: Config, model_path: str, image_path: str) -> None:
 @click.option("--host", "-h", default="0.0.0.0", help="API server host")
 @click.option("--port", "-p", type=int, default=8000, help="API server port")
 @click.pass_obj
-def serve(
-    config: Config, model_path: Optional[str], host: str, port: int
-) -> None:
+def serve(config: Config, model_path: Optional[str], host: str, port: int) -> None:
     """Start the API server."""
     import uvicorn
 

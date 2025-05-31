@@ -3,7 +3,7 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 import numpy as np
 from PIL import Image, ImageChops, ImageEnhance
@@ -88,7 +88,7 @@ class ELAProcessor:
 
         return image_array
 
-    def process_batch(self, image_paths: list[Union[str, Path]]) -> np.ndarray:
+    def process_batch(self, image_paths: List[Union[str, Path]]) -> np.ndarray:
         """Process multiple images with ELA.
 
         Args:

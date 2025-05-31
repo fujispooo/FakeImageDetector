@@ -2,12 +2,12 @@
 
 import io
 import logging
+import tempfile
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
-
 from PIL import Image
 from pydantic import BaseModel
 
@@ -42,9 +42,9 @@ class HealthResponse(BaseModel):
 class APIState:
     """Global state for API."""
 
-    def __init__(self):
-        self.model: FakeImageCNN = None
-        self.ela_processor: ELAProcessor = None
+    def __init__(self) -> None:
+        self.model: Optional[FakeImageCNN] = None
+        self.ela_processor: Optional[ELAProcessor] = None
         self.config: APIConfig = APIConfig()
         self.model_loaded = False
 
@@ -70,7 +70,7 @@ def get_api_state() -> APIState:
 
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     """Initialize the API on startup."""
     config = APIConfig()
 
@@ -90,7 +90,7 @@ async def health_check(state: APIState = Depends(get_api_state)):
 @app.post("/predict", response_model=PredictionResponse)
 async def predict_image(
     file: UploadFile = File(...), state: APIState = Depends(get_api_state)
-):
+) -> PredictionResponse:
     """Predict if an uploaded image is fake or real."""
     if not state.model_loaded:
         raise HTTPException(
@@ -98,7 +98,7 @@ async def predict_image(
             detail="Model not loaded. Please check server configuration.",
         )
 
-    if not file.content_type.startswith("image/"):
+    if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
 
     try:
@@ -115,7 +115,7 @@ async def predict_image(
 
         image = Image.open(io.BytesIO(contents))
 
-        with io.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
             image.save(temp_file.name, "JPEG")
             temp_path = temp_file.name
 
@@ -143,15 +143,13 @@ async def predict_image(
 
     except Exception as e:
         logger.error(f"Prediction error: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Error processing image: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
 
 
 @app.post("/predict_batch")
 async def predict_batch(
     files: List[UploadFile] = File(...), state: APIState = Depends(get_api_state)
-):
+) -> Dict[str, List[Dict[str, Optional[str]]]]:
     """Predict multiple images at once."""
     if not state.model_loaded:
         raise HTTPException(
@@ -168,7 +166,7 @@ async def predict_batch(
 
     for i, file in enumerate(files):
         try:
-            if not file.content_type.startswith("image/"):
+            if not file.content_type or not file.content_type.startswith("image/"):
                 results.append(
                     {"filename": file.filename, "error": "File must be an image"}
                 )
@@ -190,7 +188,7 @@ async def predict_batch(
 
             image = Image.open(io.BytesIO(contents))
 
-            with io.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
+            with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
                 image.save(temp_file.name, "JPEG")
                 temp_path = temp_file.name
 
@@ -210,9 +208,9 @@ async def predict_batch(
                 results.append(
                     {
                         "filename": file.filename,
-                        "is_fake": is_fake,
-                        "confidence": confidence,
-                        "probabilities": {"real": real_prob, "fake": fake_prob},
+                        "is_fake": str(is_fake),
+                        "confidence": str(confidence),
+                        "probabilities": str({"real": real_prob, "fake": fake_prob}),
                     }
                 )
 
@@ -226,7 +224,9 @@ async def predict_batch(
 
 
 @app.post("/load_model")
-async def load_model(model_path: str, state: APIState = Depends(get_api_state)):
+async def load_model(
+    model_path: str, state: APIState = Depends(get_api_state)
+) -> Dict[str, str]:
     """Load a model from the specified path."""
     if not Path(model_path).exists():
         raise HTTPException(

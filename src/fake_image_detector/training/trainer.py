@@ -174,7 +174,7 @@ class ModelTrainer:
             cm: Confusion matrix
         """
         plt.figure(figsize=(8, 6))
-        plt.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
+        plt.imshow(cm, interpolation="nearest", cmap="Blues")
         plt.title("Confusion Matrix")
         plt.colorbar()
 
