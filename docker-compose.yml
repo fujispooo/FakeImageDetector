@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  fake-image-detector:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+    environment:
+      - PYTHONPATH=/app
+    command: serve --model-path /app/models/fake_image_detector_model.h5
+
+  dev:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+    environment:
+      - PYTHONPATH=/app
+    command: bash
+    stdin_open: true
+    tty: true
