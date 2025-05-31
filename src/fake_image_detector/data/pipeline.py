@@ -5,7 +5,7 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split  # type: ignore
 from tensorflow.keras.utils import to_categorical
 
 from ..preprocessing.ela import ELAProcessor
@@ -139,8 +139,14 @@ class DataPipeline:
         Returns:
             Tuple of (X_train, X_test, y_train, y_test)
         """
-        return train_test_split(
+        result = train_test_split(
             X, y, test_size=self.test_size, random_state=self.random_state, stratify=y
+        )
+        return (
+            np.asarray(result[0]),
+            np.asarray(result[1]),
+            np.asarray(result[2]),
+            np.asarray(result[3]),
         )
 
     def load_and_prepare(

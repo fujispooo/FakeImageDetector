@@ -8,7 +8,7 @@ from typing import Any, Dict
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix  # type: ignore
 
 from ..data.pipeline import DataPipeline
 from ..models.cnn import FakeImageCNN
@@ -79,7 +79,12 @@ class ModelTrainer:
         self.logger.info(f"Test data shape: {X_test.shape}")
 
         history = self.model.train(
-            X_train, y_train, X_test, y_test, epochs=epochs, batch_size=batch_size
+            tf.convert_to_tensor(X_train),
+            tf.convert_to_tensor(y_train),
+            tf.convert_to_tensor(X_test),
+            tf.convert_to_tensor(y_test),
+            epochs=epochs,
+            batch_size=batch_size,
         )
 
         results = self.evaluate_model(X_test, y_test, history)
@@ -111,9 +116,11 @@ class ModelTrainer:
         """
         self.logger.info("Evaluating model...")
 
-        test_metrics = self.model.evaluate(X_test, y_test)
+        test_metrics = self.model.evaluate(
+            tf.convert_to_tensor(X_test), tf.convert_to_tensor(y_test)
+        )
 
-        y_pred = self.model.predict(X_test)
+        y_pred = self.model.predict(tf.convert_to_tensor(X_test))
         y_pred_classes = np.argmax(y_pred, axis=1)
         y_true = np.argmax(y_test, axis=1)
 

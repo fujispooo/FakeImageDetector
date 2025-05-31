@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 import click
+import tensorflow as tf
 import yaml
 
 from ..config.settings import Config
@@ -120,14 +121,14 @@ def predict(config: Config, model_path: str, image_path: str) -> None:
     processed_image = ela_processor.process_and_resize(image_path)
     processed_image = processed_image.reshape(1, *processed_image.shape)
 
-    predictions = model.predict(processed_image)
+    predictions = model.predict(tf.convert_to_tensor(processed_image))
     probabilities = predictions[0]
 
     real_prob = probabilities[0]
     fake_prob = probabilities[1]
 
     is_fake = fake_prob > real_prob
-    confidence = max(real_prob, fake_prob)
+    confidence = float(max(float(real_prob), float(fake_prob)))
 
     click.echo(f"Image: {image_path}")
     click.echo(f"Prediction: {'FAKE' if is_fake else 'REAL'}")

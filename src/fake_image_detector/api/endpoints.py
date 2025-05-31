@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import numpy as np
+import tensorflow as tf
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from PIL import Image
 from pydantic import BaseModel
@@ -82,7 +83,7 @@ async def startup_event() -> None:
 
 
 @app.get("/health", response_model=HealthResponse)
-async def health_check(state: APIState = Depends(get_api_state)):
+async def health_check(state: APIState = Depends(get_api_state)) -> HealthResponse:
     """Health check endpoint."""
     return HealthResponse(status="healthy", model_loaded=state.model_loaded)
 
@@ -120,10 +121,12 @@ async def predict_image(
             temp_path = temp_file.name
 
         try:
+            assert state.ela_processor is not None
+            assert state.model is not None
             processed_image = state.ela_processor.process_and_resize(temp_path)
             processed_image = np.expand_dims(processed_image, axis=0)
 
-            predictions = state.model.predict(processed_image)
+            predictions = state.model.predict(tf.convert_to_tensor(processed_image))
             probabilities = predictions[0]
 
             real_prob = float(probabilities[0])
@@ -193,10 +196,12 @@ async def predict_batch(
                 temp_path = temp_file.name
 
             try:
+                assert state.ela_processor is not None
+                assert state.model is not None
                 processed_image = state.ela_processor.process_and_resize(temp_path)
                 processed_image = np.expand_dims(processed_image, axis=0)
 
-                predictions = state.model.predict(processed_image)
+                predictions = state.model.predict(tf.convert_to_tensor(processed_image))
                 probabilities = predictions[0]
 
                 real_prob = float(probabilities[0])

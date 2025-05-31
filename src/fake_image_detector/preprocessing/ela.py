@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List, Tuple, Union
 
 import numpy as np
+import numpy.typing as npt
 from PIL import Image, ImageChops, ImageEnhance
 
 
@@ -58,7 +59,7 @@ class ELAProcessor:
             ela_image = ImageChops.difference(original_image, resaved_image)
 
             extrema = ela_image.getextrema()
-            max_diff = max([ex[1] for ex in extrema])
+            max_diff = max([ex[1] if isinstance(ex, tuple) else ex for ex in extrema])
 
             if max_diff == 0:
                 max_diff = 1
@@ -72,7 +73,9 @@ class ELAProcessor:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
 
-    def process_and_resize(self, image_path: Union[str, Path]) -> np.ndarray:
+    def process_and_resize(
+        self, image_path: Union[str, Path]
+    ) -> npt.NDArray[np.float32]:
         """Process image with ELA and resize to target dimensions.
 
         Args:
@@ -86,9 +89,11 @@ class ELAProcessor:
 
         image_array = np.array(resized_image, dtype=np.float32) / 255.0
 
-        return image_array
+        return np.asarray(image_array, dtype=np.float32)
 
-    def process_batch(self, image_paths: List[Union[str, Path]]) -> np.ndarray:
+    def process_batch(
+        self, image_paths: List[Union[str, Path]]
+    ) -> npt.NDArray[np.float32]:
         """Process multiple images with ELA.
 
         Args:
@@ -110,4 +115,4 @@ class ELAProcessor:
         if not processed_images:
             raise ValueError("No images could be processed successfully")
 
-        return np.array(processed_images)
+        return np.asarray(processed_images, dtype=np.float32)
